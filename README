@@ -3,3 +3,9 @@ exposure. Only works with uncompressed DNG files, only tested with those
 produced by the Pentax Q with firmware 1.10.
 
 Requires python 2.6 or 2.7.
+
+Usage: stack.py [-a] input1.dng input2.dng [input3.dng [...]] output.dng
+
+Options:
+  -h, --help     show this help message and exit
+  -a, --average  Average sample values (instead of summing)

@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 
-from sys import argv
+from sys import exit
 from struct import pack
+from optparse import OptionParser
+from os.path import exists
+
 from parse import DNG
 
 class Collector:
@@ -33,18 +36,32 @@ class Collector:
 	def __str__(self):
 		return "".join(self.data)
 
-raws = [DNG(open(fn, "rb")) for fn in argv[1:]]
+p = OptionParser("Usage: %prog [-a] input1.dng input2.dng [input3.dng [...]] output.dng")
+p.add_option("-a", "--average", action="store_true", help="Average sample values (instead of summing)")
+opts, args = p.parse_args()
+
+if len(args) < 3:
+	p.print_help()
+	exit(1)
+
+outfile = args[-1]
+if exists(outfile):
+	print "Cowardly refusing to overwrite", outfile
+	exit(1)
+
+raws = [DNG(open(fn, "rb")) for fn in args[:-1]]
 
 t = raws[0]
 big = (1 << t.bitspersample) - 1
 warned = False
 c = Collector(t.bitspersample)
 miny, minx, maxy, maxx = t.activearea
+average = opts.average
 
 for y in range(t.height):
 	for x in range(t.width):
 		val = sum(r.get_pixel() for r in raws)
-		if not (miny <= y < maxy and minx <= x < maxx):
+		if average or not (miny <= y < maxy and minx <= x < maxx):
 			val /= len(raws)
 		if val > big:
 			if not warned:
@@ -53,7 +70,7 @@ for y in range(t.height):
 			val = big
 		c.put(val)
 
-ofh = open("out.dng", "wb")
+ofh = open(outfile, "wb")
 fh = t.fh
 fh.seek(0)
 ofh.write(fh.read(t.offset))
