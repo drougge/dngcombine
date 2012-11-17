@@ -14,6 +14,13 @@ class DNG:
 		self.raw_size = t.ifdget(ifd, 279)[0]
 		self.offset = t.ifdget(ifd, 273)[0]
 		self.activearea = t.ifdget(ifd, 50829)
+		exif = t.ifdget(t.ifd[0], 34665)
+		if exif:
+			t.reinit_from(exif[0])
+			exposuretime = t.ifdget(t.ifd[0], 33434)
+			if exposuretime:
+				self.exposuretime = exposuretime
+				self.exposuretime_offset = t.ifd[0][33434][2]
 		fh.seek(self.offset)
 		self.data = fh.read(self.raw_size)
 		assert len(self.data) == self.raw_size

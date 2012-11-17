@@ -2,6 +2,7 @@
 # -*- coding: iso-8859-1 -*-
 
 from sys import argv
+from struct import pack
 from parse import DNG
 
 class Collector:
@@ -59,3 +60,17 @@ ofh.write(fh.read(t.offset))
 ofh.write(str(c))
 fh.seek(t.raw_size, 1)
 ofh.write(fh.read())
+
+if hasattr(t, "exposuretime_offset"):
+	exposuretime = [0, 1]
+	for r in raws:
+		n = exposuretime[0] * r.exposuretime[1] + exposuretime[1] * r.exposuretime[0]
+		d = exposuretime[1] * r.exposuretime[1]
+		gcd, tmp = n, d
+		while tmp:
+			gcd, tmp = tmp, gcd % tmp
+		exposuretime = [n // gcd, d // gcd]
+	fh.seek(0)
+	fmt = {"I": "<II", "M": ">II"}[fh.read(1)]
+	ofh.seek(t.exposuretime_offset)
+	ofh.write(pack(fmt, *exposuretime))
