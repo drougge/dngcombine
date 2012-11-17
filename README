@@ -9,3 +9,8 @@ Usage: stack.py [-a] input1.dng input2.dng [input3.dng [...]] output.dng
 Options:
   -h, --help     show this help message and exit
   -a, --average  Average sample values (instead of summing)
+
+All input files are combined into a single exposure output file. All
+metadata, including the preview image and unparseable maker blocks, is
+taken unmodified from the first input image, except exposure time which is
+added from all.
