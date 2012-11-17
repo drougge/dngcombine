@@ -81,6 +81,8 @@ class DNG:
 		self.bitspersample = t.ifdget(ifd, 258)[0]
 		assert t.ifdget(ifd, 277)[0] # SamplesPerPixel
 		self.raw_size = t.ifdget(ifd, 279)[0]
+		if self.width * self.height * self.bitspersample // 8 != self.raw_size:
+			raise Exception("Image data wrong size (compressed?)")
 		self.offset = t.ifdget(ifd, 273)[0]
 		self.activearea = t.ifdget(ifd, 50829)
 		exif = t.ifdget(t.ifd[0], 34665)
