@@ -1,0 +1,5 @@
+Combines several DNG files into one, as if they had been a single longer
+exposure. Only works with uncompressed DNG files, only tested with those
+produced by the Pentax Q with firmware 1.10.
+
+Requires python 2.6 or 2.7.
