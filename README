@@ -7,8 +7,10 @@ Requires python 2.6 or 2.7.
 Usage: stack.py [-a] input1.dng input2.dng [input3.dng [...]] output.dng
 
 Options:
-  -h, --help     show this help message and exit
-  -a, --average  Average sample values (instead of summing)
+  -h, --help            show this help message and exit
+  -a, --average         Average sample values (instead of summing)
+  -b BLACKLEVEL, --blacklevel=BLACKLEVEL
+                        Override black level
 
 All input files are combined into a single exposure output file. All
 metadata, including the preview image and unparseable maker blocks, is

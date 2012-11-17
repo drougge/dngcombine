@@ -76,7 +76,14 @@ class DNG:
 	def __init__(self, fh):
 		self.fh = fh
 		t = TIFF(fh)
+		ifd = t.ifd[0]
+		if t.ifdget(ifd, 50707) != (1, 1, 0, 0):
+			raise Exception("Unsupported DNG version")
 		ifd = t.subifd[0]
+		blacklevel = set(t.ifdget(ifd, 50714) or [0])
+		if len(blacklevel) > 1 or [i for i in (50715, 50716) if t.ifdget(ifd, i)]:
+			print "Warning: Complex black levels not handled"
+		self.blacklevel = sum(blacklevel) / len(blacklevel)
 		self.width, self.height = t.ifdget(ifd, 256)[0], t.ifdget(ifd, 257)[0]
 		self.bitspersample = t.ifdget(ifd, 258)[0]
 		assert t.ifdget(ifd, 277)[0] # SamplesPerPixel

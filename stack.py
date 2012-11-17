@@ -38,6 +38,7 @@ class Collector:
 
 p = OptionParser("Usage: %prog [-a] input1.dng input2.dng [input3.dng [...]] output.dng")
 p.add_option("-a", "--average", action="store_true", help="Average sample values (instead of summing)")
+p.add_option("-b", "--blacklevel", type="int", help="Override black level")
 opts, args = p.parse_args()
 
 if len(args) < 3:
@@ -50,6 +51,7 @@ if exists(outfile):
 	exit(1)
 
 raws = [DNG(open(fn, "rb")) for fn in args[:-1]]
+count = len(raws)
 
 t = raws[0]
 big = (1 << t.bitspersample) - 1
@@ -57,12 +59,19 @@ warned = False
 c = Collector(t.bitspersample)
 miny, minx, maxy, maxx = t.activearea
 average = opts.average
+if opts.blacklevel is not None:
+	if average:
+		print "Blacklevel is ignored for averaging"
+		exit(1)
+	for r in raws:
+		r.blacklevel = opts.blacklevel
 
 for y in range(t.height):
 	for x in range(t.width):
-		val = sum(r.get_pixel() for r in raws)
 		if average or not (miny <= y < maxy and minx <= x < maxx):
-			val /= len(raws)
+			val = sum(r.get_pixel() for r in raws) // count
+		else:
+			val = sum(max(0, r.get_pixel() - r.blacklevel) for r in raws) + t.blacklevel
 		if val > big:
 			if not warned:
 				print "Warning: Clipped values"
