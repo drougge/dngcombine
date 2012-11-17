@@ -1,7 +1,76 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 
-from wellpapp.util import TIFF
+class TIFF:
+	"""Pretty minimal TIFF container parser"""
+	
+	types = {1: (1, "B"),  # BYTE
+		 2: (1, None), # ASCII
+		 3: (2, "H"),  # SHORT
+		 4: (4, "I"),  # LONG
+		 5: (8, "II"), # RATIONAL
+		 # No TIFF6 fields, sorry
+		}
+	
+	def __init__(self, fh, short_header=False):
+		from struct import unpack
+		self._fh = fh
+		d = fh.read(4)
+		if short_header:
+			if d[:2] not in (b"II", b"MM"): raise Exception("Not TIFF")
+		else:
+			if d not in (b"II*\0", b"MM\0*"): raise Exception("Not TIFF")
+		endian = {b"M": ">", b"I": "<"}[d[0]]
+		self._up = lambda fmt, *a: unpack(endian + fmt, *a)
+		self._up1 = lambda *a: self._up(*a)[0]
+		if short_header:
+			next_ifd = short_header
+		else:
+			next_ifd = self._up1("I", fh.read(4))
+		self.reinit_from(next_ifd, short_header)
+	
+	def reinit_from(self, next_ifd, short_header=False):
+		self.ifd = []
+		self.subifd = []
+		while next_ifd:
+			self.ifd.append(self._ifdread(next_ifd))
+			if short_header: return
+			next_ifd = self._up1("I", self._fh.read(4))
+		subifd = self.ifdget(self.ifd[0], 0x14a) or []
+		for next_ifd in subifd:
+			self.subifd.append(self._ifdread(next_ifd))
+	
+	def ifdget(self, ifd, tag):
+		if tag in ifd:
+			type, vc, off = ifd[tag]
+			if type not in self.types: return None
+			if isinstance(off, int): # offset
+				self._fh.seek(off)
+				tl, fmt = self.types[type]
+				off = self._fh.read(tl * vc)
+				if fmt: off = self._up(fmt * vc, off)
+			if isinstance(off, basestring):
+				off = off.rstrip("\0")
+			return off
+	
+	def _ifdread(self, next_ifd):
+		ifd = {}
+		self._fh.seek(next_ifd)
+		count = self._up1("H", self._fh.read(2))
+		for i in range(count):
+			d = self._fh.read(12)
+			tag, type, vc = self._up("HHI", d[:8])
+			if type in self.types and self.types[type][0] * vc <= 4:
+				tl, fmt = self.types[type]
+				d = d[8:8 + (tl * vc)]
+				if fmt:
+					off = self._up(fmt * vc, d)
+				else:
+					off = d # ASCII
+			else:
+				off = self._up1("I", d[8:])
+			ifd[tag] = (type, vc, off)
+		return ifd
 
 class DNG:
 	def __init__(self, fh):
