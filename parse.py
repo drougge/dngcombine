@@ -2,10 +2,10 @@
 # -*- coding: iso-8859-1 -*-
 
 from wellpapp.util import TIFF
-from sys import argv
 
 class DNG:
 	def __init__(self, fh):
+		self.fh = fh
 		t = TIFF(fh)
 		ifd = t.subifd[0]
 		self.width, self.height = t.ifdget(ifd, 256)[0], t.ifdget(ifd, 257)[0]
@@ -40,8 +40,10 @@ class DNG:
 			else:
 				return self.get_pixel()
 
-raw = DNG(open(argv[1], "rb"))
-ofh = open("out.pgm", "wb")
-ofh.write("P5\n4000 3000\n255\n")
-for r in range(raw.height):
-	ofh.write("".join(chr(raw.get_pixel() >> 4) for p in range(raw.width))[:4000])
+if __name__ == "__main__":
+	from sys import argv
+	raw = DNG(open(argv[1], "rb"))
+	ofh = open("out.pgm", "wb")
+	ofh.write("P5\n4000 3000\n255\n")
+	for r in range(raw.height):
+		ofh.write("".join(chr(raw.get_pixel() >> 4) for p in range(raw.width))[:4000])
