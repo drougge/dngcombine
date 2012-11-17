@@ -38,14 +38,13 @@ t = raws[0]
 big = (1 << t.bitspersample) - 1
 warned = False
 c = Collector(t.bitspersample)
+miny, minx, maxy, maxx = t.activearea
 
 for y in range(t.height):
 	for x in range(t.width):
-		data = [r.get_pixel() for r in raws]
-		if x < 4000:
-			val = sum(data)
-		else:
-			val = data[0]
+		val = sum(r.get_pixel() for r in raws)
+		if not (miny <= y < maxy and minx <= x < maxx):
+			val /= len(raws)
 		if val > big:
 			if not warned:
 				print "Warning: Clipped values"

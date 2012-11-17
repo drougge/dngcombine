@@ -13,6 +13,7 @@ class DNG:
 		assert t.ifdget(ifd, 277)[0] # SamplesPerPixel
 		self.raw_size = t.ifdget(ifd, 279)[0]
 		self.offset = t.ifdget(ifd, 273)[0]
+		self.activearea = t.ifdget(ifd, 50829)
 		fh.seek(self.offset)
 		self.data = fh.read(self.raw_size)
 		assert len(self.data) == self.raw_size
