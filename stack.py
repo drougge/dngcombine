@@ -13,7 +13,7 @@ class Collector:
 	
 	def _put_bits(self, val, bits):
 		self.have_bits += bits
-		self.val = self.val << bits | val
+		self.val = (self.val << bits) | val
 		diff = self.have_bits - 8
 		if diff >= 0:
 			self.data.append(chr(self.val >> diff))
@@ -23,11 +23,11 @@ class Collector:
 	def put(self, val):
 		bits = self.bitspersample
 		while bits > 8:
-			self._put_bits(val & 0xff, 8)
+			self._put_bits((val >> (bits - 8)) & 0xff, 8)
 			val >>= 8
 			bits -= 8
 		if bits:
-			self._put_bits(val, bits)
+			self._put_bits(val & ((1 << bits) - 1), bits)
 	
 	def __str__(self):
 		return "".join(self.data)
@@ -35,18 +35,23 @@ class Collector:
 raws = [DNG(open(fn, "rb")) for fn in argv[1:]]
 
 t = raws[0]
-big = 1 << t.bitspersample - 1
+big = (1 << t.bitspersample) - 1
 warned = False
 c = Collector(t.bitspersample)
 
-for p in range(t.width * t.height):
-	val = sum(r.get_pixel() for r in raws)
-	if val > big:
-		if not warned:
-			print "Warning: Clipped values"
-			warned = True
-		val = big
-	c.put(val)
+for y in range(t.height):
+	for x in range(t.width):
+		data = [r.get_pixel() for r in raws]
+		if x < 4000:
+			val = sum(data)
+		else:
+			val = data[0]
+		if val > big:
+			if not warned:
+				print "Warning: Clipped values"
+				warned = True
+			val = big
+		c.put(val)
 
 ofh = open("out.dng", "wb")
 fh = t.fh
