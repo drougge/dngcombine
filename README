@@ -12,8 +12,24 @@ Options:
   -a, --average         Average sample values (instead of summing)
   -b BLACKLEVEL, --blacklevel=BLACKLEVEL
                         Override black level
+  -s SCALE, --scale=SCALE
+                        Multiply samples by this
 
 All input files are combined into a single exposure output file. All
 metadata, including the preview image and unparseable maker blocks, is
 taken unmodified from the first input image, except exposure time which is
 added from all and ISO which is averaged (and divided) as appropriate.
+
+--scale is a shorter way of first stacking several sets of exposures and
+then averaging the stacks. Example:
+
+> stack.py --scale 0.5 a.dng b.dng c.dng d.dng final.dng
+
+will give an equivalent result to:
+
+> stack.py a.dng b.dng tmp1.dng
+> stack.py c.dng d.dng tmp2.dng
+> stack.py --average tmp1.dng tmp2.dng final.dng
+
+--average is almost a special case of --scale, except it doesn't subtract
+the black level of all but the first image.

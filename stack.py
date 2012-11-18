@@ -55,6 +55,7 @@ class Collector:
 p = OptionParser("Usage: %prog [options] input1.dng input2.dng [input3.dng [...]] output.dng")
 p.add_option("-a", "--average", action="store_true", help="Average sample values (instead of summing)")
 p.add_option("-b", "--blacklevel", type="int", help="Override black level")
+p.add_option("-s", "--scale", type="float", help="Multiply samples by this")
 opts, args = p.parse_args()
 
 if len(args) < 3:
@@ -82,6 +83,7 @@ if opts.blacklevel is not None:
 	blacklevel = opts.blacklevel
 else:
 	blacklevel = sum(r.blacklevel for r in raws[1:])
+scale = opts.scale or 1
 
 for y in range(t.height):
 	for x in range(t.width):
@@ -89,6 +91,7 @@ for y in range(t.height):
 			val = sum(r.get_pixel() for r in raws) // count
 		else:
 			val = max(0, sum(r.get_pixel() for r in raws) - blacklevel)
+		val = int(val * scale)
 		if val > big:
 			if not warned:
 				print "Warning: Clipped values"
