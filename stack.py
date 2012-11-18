@@ -79,15 +79,16 @@ if opts.blacklevel is not None:
 	if average:
 		print "Blacklevel is ignored for averaging"
 		exit(1)
-	for r in raws:
-		r.blacklevel = opts.blacklevel
+	blacklevel = opts.blacklevel
+else:
+	blacklevel = sum(r.blacklevel for r in raws[1:])
 
 for y in range(t.height):
 	for x in range(t.width):
 		if average or not (miny <= y < maxy and minx <= x < maxx):
 			val = sum(r.get_pixel() for r in raws) // count
 		else:
-			val = sum(max(0, r.get_pixel() - r.blacklevel) for r in raws) + t.blacklevel
+			val = max(0, sum(r.get_pixel() for r in raws) - blacklevel)
 		if val > big:
 			if not warned:
 				print "Warning: Clipped values"
