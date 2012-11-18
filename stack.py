@@ -30,7 +30,6 @@ class Collector:
 		bits = self.bitspersample
 		while bits > 8:
 			self._put_bits((val >> (bits - 8)) & 0xff, 8)
-			val >>= 8
 			bits -= 8
 		if bits:
 			self._put_bits(val & ((1 << bits) - 1), bits)
