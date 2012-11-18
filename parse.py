@@ -107,6 +107,26 @@ class DNG:
 		self._pos = 0
 		self._have_bits = 0
 		self._val = 0
+		if self.bitspersample == 16:
+			self.get_pixel = self.get_pixel_16
+		if self.bitspersample == 12:
+			self.get_pixel = self.get_pixel_12
+	
+	def get_pixel_16(self):
+		a, b = self.data[self._pos:self._pos + 2]
+		self._pos += 2
+		return a << 8 | b
+	
+	def get_pixel_12(self):
+		if self._have_bits:
+			self._have_bits = 0
+			return self._val
+		else:
+			a, b, c = self.data[self._pos:self._pos + 3]
+			self._pos += 3
+			self._have_bits = 12
+			self._val = (b & 0xf) << 8 | c
+			return a << 4 | (b >> 4)
 	
 	def get_pixel(self):
 		byte = self.data[self._pos]
