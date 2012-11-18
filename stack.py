@@ -16,6 +16,24 @@ class Collector:
 		self.write = self.data.write
 		self.have_bits = 0
 		self.val = 0
+		if bitspersample == 16:
+			self.put = self.put_16
+		if bitspersample == 12:
+			self.put = self.put_12
+	
+	def put_16(self, val):
+		self.data.append(val >> 8)
+		self.data.append(val & 0xff)
+	
+	def put_12(self, val):
+		if self.have_bits:
+			self.data.append((self.val << 4) | (val >> 8))
+			self.data.append(val & 0xff)
+			self.have_bits = 0
+		else:
+			self.data.append(val >> 4)
+			self.val = val & 0xf
+			self.have_bits = 4
 	
 	def _put_bits(self, val, bits):
 		self.have_bits += bits
