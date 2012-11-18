@@ -5,13 +5,15 @@ from sys import exit
 from struct import pack
 from optparse import OptionParser
 from os.path import exists
+from array import array
 
 from parse import DNG
 
 class Collector:
 	def __init__(self, bitspersample):
 		self.bitspersample = bitspersample
-		self.data = []
+		self.data = array("B")
+		self.write = self.data.write
 		self.have_bits = 0
 		self.val = 0
 	
@@ -20,7 +22,7 @@ class Collector:
 		self.val = (self.val << bits) | val
 		diff = self.have_bits - 8
 		if diff >= 0:
-			self.data.append(chr(self.val >> diff))
+			self.data.append(self.val >> diff)
 			self.val &= (1 << diff) - 1
 			self.have_bits = diff
 	
@@ -32,9 +34,6 @@ class Collector:
 			bits -= 8
 		if bits:
 			self._put_bits(val & ((1 << bits) - 1), bits)
-	
-	def __str__(self):
-		return "".join(self.data)
 
 p = OptionParser("Usage: %prog [-a] input1.dng input2.dng [input3.dng [...]] output.dng")
 p.add_option("-a", "--average", action="store_true", help="Average sample values (instead of summing)")
@@ -83,7 +82,7 @@ ofh = open(outfile, "wb")
 fh = t.fh
 fh.seek(0)
 ofh.write(fh.read(t.offset))
-ofh.write(str(c))
+c.write(ofh)
 fh.seek(t.raw_size, 1)
 ofh.write(fh.read())
 

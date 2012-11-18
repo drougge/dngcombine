@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 
+from array import array
+
 class TIFF:
 	"""Pretty minimal TIFF container parser"""
 	
@@ -100,14 +102,14 @@ class DNG:
 				self.exposuretime = exposuretime
 				self.exposuretime_offset = t.ifd[0][33434][2]
 		fh.seek(self.offset)
-		self.data = fh.read(self.raw_size)
-		assert len(self.data) == self.raw_size
+		self.data = array("B")
+		self.data.fromfile(fh, self.raw_size)
 		self._pos = 0
 		self._have_bits = 0
 		self._val = 0
 	
 	def get_pixel(self):
-		byte = ord(self.data[self._pos])
+		byte = self.data[self._pos]
 		self._pos += 1
 		if self._have_bits + 8 > self.bitspersample:
 			want = self.bitspersample - self._have_bits
