@@ -1,10 +1,11 @@
 Combines several DNG files into one, as if they had been a single longer
-exposure. Only works with uncompressed DNG files, only tested with those
-produced by the Pentax Q with firmware 1.10.
+exposure, or a single exposure at lower ISO (with -a). Only works with
+uncompressed DNG files, only tested with those produced by the Pentax Q
+with firmware 1.10.
 
 Requires python 2.6 or 2.7.
 
-Usage: stack.py [-a] input1.dng input2.dng [input3.dng [...]] output.dng
+Usage: stack.py [options] input1.dng input2.dng [input3.dng [...]] output.dng
 
 Options:
   -h, --help            show this help message and exit
@@ -15,4 +16,4 @@ Options:
 All input files are combined into a single exposure output file. All
 metadata, including the preview image and unparseable maker blocks, is
 taken unmodified from the first input image, except exposure time which is
-added from all.
+added from all and ISO which is averaged (and divided) as appropriate.

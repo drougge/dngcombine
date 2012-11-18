@@ -44,7 +44,7 @@ class TIFF:
 	
 	def ifdget(self, ifd, tag):
 		if tag in ifd:
-			type, vc, off = ifd[tag]
+			type, vc, off, pos = ifd[tag]
 			if type not in self.types: return None
 			if isinstance(off, int): # offset
 				self._fh.seek(off)
@@ -59,6 +59,7 @@ class TIFF:
 		ifd = {}
 		self._fh.seek(next_ifd)
 		count = self._up1("H", self._fh.read(2))
+		pos = next_ifd + 2
 		for i in range(count):
 			d = self._fh.read(12)
 			tag, type, vc = self._up("HHI", d[:8])
@@ -71,7 +72,8 @@ class TIFF:
 					off = d # ASCII
 			else:
 				off = self._up1("I", d[8:])
-			ifd[tag] = (type, vc, off)
+			ifd[tag] = (type, vc, off, pos)
+			pos += 12
 		return ifd
 
 class DNG:
@@ -97,10 +99,14 @@ class DNG:
 		exif = t.ifdget(t.ifd[0], 34665)
 		if exif:
 			t.reinit_from(exif[0])
-			exposuretime = t.ifdget(t.ifd[0], 33434)
-			if exposuretime:
-				self.exposuretime = exposuretime
-				self.exposuretime_offset = t.ifd[0][33434][2]
+			for i, name in ((33434, "exposuretime"), (34855, "iso")):
+				value = t.ifdget(t.ifd[0], i)
+				if value:
+					setattr(self, name, value)
+					offset = t.ifd[0][i][2]
+					if not isinstance(offset, int):
+						offset = t.ifd[0][i][3]
+					setattr(self, name + "_offset", offset)
 		fh.seek(self.offset)
 		self.data = array("B")
 		self.data.fromfile(fh, self.raw_size)

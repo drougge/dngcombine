@@ -52,7 +52,7 @@ class Collector:
 		if bits:
 			self._put_bits(val & ((1 << bits) - 1), bits)
 
-p = OptionParser("Usage: %prog [-a] input1.dng input2.dng [input3.dng [...]] output.dng")
+p = OptionParser("Usage: %prog [options] input1.dng input2.dng [input3.dng [...]] output.dng")
 p.add_option("-a", "--average", action="store_true", help="Average sample values (instead of summing)")
 p.add_option("-b", "--blacklevel", type="int", help="Override black level")
 opts, args = p.parse_args()
@@ -116,3 +116,13 @@ if hasattr(t, "exposuretime_offset"):
 	fmt = {"I": "<II", "M": ">II"}[fh.read(1)]
 	ofh.seek(t.exposuretime_offset)
 	ofh.write(pack(fmt, *exposuretime))
+
+if hasattr(t, "iso_offset"):
+	from math import log10
+	iso = 10 ** (sum(log10(r.iso[0]) for r in raws) / count)
+	if average:
+		iso /= count
+	fh.seek(0)
+	fmt = {"I": "<HII", "M": ">HII"}[fh.read(1)]
+	ofh.seek(t.iso_offset + 2)
+	ofh.write(pack(fmt, 4, 1, int(round(iso))))
